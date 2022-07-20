@@ -1,17 +1,17 @@
 extern crate rand;
 extern crate termion;
+
 use std::{thread, env, time};
 use std::fs::File;
 use std::io::{BufRead, BufReader};
-use termion::color;
-use termion::clear;
+use termion::{color, clear};
 
 
 fn main() {
     let mut world = [[0u8; 75]; 75];
     let mut generations = 0;
     
-    // Reading input from CLI
+    // Reading input from CLI - used for obtaining filepath
     let args: Vec<String> = env::args().collect();
 
     if args.len() < 2 {
@@ -37,12 +37,14 @@ fn main() {
         generations += 1;
         println!("{}", clear::All);
         displayworld(world);
-        println!("{blue} Population at generation {g} and {c}",
+        println!("{blue} Population at generation {g} is {c}",
                  blue = color::Fg(color::Blue), g = generations, c = census(world));
         thread::sleep(time::Duration::from_secs(2));
     }
+
 }
 
+// Function to populate the world with data from files
 fn populate_from_file(filename: String) -> [[u8; 75]; 75] {
     let mut newworld = [[0u8; 75]; 75];
     let file = File::open(filename).unwrap();
@@ -70,6 +72,7 @@ fn populate_from_file(filename: String) -> [[u8; 75]; 75] {
     newworld
 }
 
+// Function to display the world
 fn displayworld(world: [[u8; 75]; 75]) {
     for i in 0..74{
         for j in 0..74{
