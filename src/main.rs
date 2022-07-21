@@ -3,7 +3,7 @@ extern crate termion;
 
 use std::{thread, env, time};
 use std::fs::File;
-use std::io::{BufRead, BufReader};
+use std::io::{BufRead, BufReader, Write};
 use termion::{color, clear};
 
 
@@ -14,7 +14,7 @@ fn main() {
     // Reading input from CLI - used for obtaining filepath
     let args: Vec<String> = env::args().collect();
 
-    if args.len() < 2 {
+    if args.len() < 3 {
         for i in 0..74 {
             for j in 0..74{
                 if rand::random(){
@@ -25,13 +25,16 @@ fn main() {
             }
         }
     }else {
-        let filename = env::args().nth(1).unwrap();
+        let filename = env::args().nth(2).unwrap();
         world = populate_from_file(filename);
     }
 
     println!("Population at generation {} is {}", generations, census(world));
+
+    // collecting generation from the environment variable
+    let g = env::args().nth(1).unwrap().parse::<u8>().unwrap();
     
-    for _gens in 0..100 {
+    for _gens in 0..g {
         let temp = generate(world);
         world = temp;
         generations += 1;
@@ -42,9 +45,10 @@ fn main() {
         thread::sleep(time::Duration::from_secs(2));
     }
 
+    save_world_to_file(world);
 }
 
-// Function to populate the world with data from files
+/// Function to populate the world with data from files
 fn populate_from_file(filename: String) -> [[u8; 75]; 75] {
     let mut newworld = [[0u8; 75]; 75];
     let file = File::open(filename).unwrap();
@@ -55,8 +59,8 @@ fn populate_from_file(filename: String) -> [[u8; 75]; 75] {
         let mut words = l.split_whitespace();
         let left = words.next().unwrap();
         let right = words.next().unwrap();
-        pairs.push((left.parse::<usize>().unwrap()
-                    , right.parse::<usize>().unwrap()))
+
+        pairs.push((left.parse::<usize>().unwrap(), right.parse::<usize>().unwrap()));
     }
 
     for i in 0..74 {
@@ -66,13 +70,15 @@ fn populate_from_file(filename: String) -> [[u8; 75]; 75] {
     }
 
     for (x,y) in pairs {
-        newworld[x][y] = 1;
+        if x < 75 && y < 75 {
+            newworld[x][y] = 1;
+        }
     }
 
     newworld
 }
 
-// Function to display the world
+/// Function to display the world
 fn displayworld(world: [[u8; 75]; 75]) {
     for i in 0..74{
         for j in 0..74{
@@ -98,6 +104,15 @@ fn census(_world: [[u8; 75]; 75]) -> u16 {
         }
     }
     count
+}
+
+/// A function that saves the game grid to a file
+fn save_world_to_file(world:[[u8; 75]; 75]){
+    let mut file = File::create("../../game_grid.txt").unwrap();
+
+    for i in 0..74{
+        writeln!(file, "{:?}", world[i].to_vec()).expect("Problem writing grid to file");
+    }
 }
 
 /// A function for generating the world for the game of life
